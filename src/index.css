@@ -1,0 +1,156 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+@layer base {
+  :root {
+    --background: 270 20% 98%;
+    --foreground: 270 50% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 270 50% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 270 50% 10%;
+
+    --primary: 270 70% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 270 30% 93%;
+    --secondary-foreground: 270 50% 20%;
+
+    --muted: 270 15% 94%;
+    --muted-foreground: 270 10% 45%;
+
+    --accent: 280 65% 60%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 270 20% 90%;
+    --input: 270 20% 90%;
+    --ring: 270 70% 55%;
+
+    --radius: 0.75rem;
+
+    --success: 145 65% 42%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --info: 210 100% 52%;
+    --info-foreground: 0 0% 100%;
+
+    --sidebar-background: 270 25% 97%;
+    --sidebar-foreground: 270 20% 25%;
+    --sidebar-primary: 270 70% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 270 40% 93%;
+    --sidebar-accent-foreground: 270 50% 20%;
+    --sidebar-border: 270 20% 90%;
+    --sidebar-ring: 270 70% 55%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(270, 70%, 55%), hsl(290, 65%, 60%));
+    --gradient-hero: linear-gradient(135deg, hsl(270, 70%, 55%), hsl(300, 60%, 55%), hsl(330, 70%, 60%));
+    --shadow-primary: 0 4px 20px -4px hsl(270 70% 55% / 0.3);
+    --shadow-card: 0 1px 3px 0 hsl(270 20% 10% / 0.06), 0 1px 2px -1px hsl(270 20% 10% / 0.06);
+    --shadow-elevated: 0 10px 40px -10px hsl(270 70% 55% / 0.15);
+
+    --font-heading: 'Plus Jakarta Sans', sans-serif;
+    --font-body: 'Plus Jakarta Sans', sans-serif;
+    --font-heading-ar: 'Cairo', sans-serif;
+    --font-body-ar: 'Cairo', sans-serif;
+  }
+
+  .dark {
+    --background: 270 30% 7%;
+    --foreground: 270 10% 93%;
+
+    --card: 270 25% 11%;
+    --card-foreground: 270 10% 93%;
+
+    --popover: 270 25% 11%;
+    --popover-foreground: 270 10% 93%;
+
+    --primary: 270 70% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 270 25% 18%;
+    --secondary-foreground: 270 10% 85%;
+
+    --muted: 270 20% 15%;
+    --muted-foreground: 270 10% 60%;
+
+    --accent: 280 60% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 270 20% 18%;
+    --input: 270 20% 18%;
+    --ring: 270 70% 60%;
+
+    --success: 145 65% 35%;
+    --warning: 38 92% 45%;
+    --info: 210 100% 45%;
+
+    --sidebar-background: 270 28% 9%;
+    --sidebar-foreground: 270 10% 85%;
+    --sidebar-primary: 270 70% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 270 25% 15%;
+    --sidebar-accent-foreground: 270 10% 85%;
+    --sidebar-border: 270 20% 18%;
+    --sidebar-ring: 270 70% 60%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(270, 70%, 60%), hsl(290, 65%, 55%));
+    --gradient-hero: linear-gradient(135deg, hsl(270, 60%, 50%), hsl(300, 50%, 50%), hsl(330, 60%, 55%));
+    --shadow-primary: 0 4px 20px -4px hsl(270 70% 60% / 0.4);
+    --shadow-card: 0 1px 3px 0 hsl(0 0% 0% / 0.2), 0 1px 2px -1px hsl(0 0% 0% / 0.2);
+    --shadow-elevated: 0 10px 40px -10px hsl(270 70% 60% / 0.2);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+  }
+
+  [dir="rtl"] body {
+    font-family: var(--font-body-ar);
+  }
+
+  [dir="rtl"] h1, [dir="rtl"] h2, [dir="rtl"] h3, [dir="rtl"] h4, [dir="rtl"] h5, [dir="rtl"] h6 {
+    font-family: var(--font-heading-ar);
+  }
+}
+
+@layer utilities {
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+  .gradient-hero {
+    background: var(--gradient-hero);
+  }
+  .shadow-primary {
+    box-shadow: var(--shadow-primary);
+  }
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+}
