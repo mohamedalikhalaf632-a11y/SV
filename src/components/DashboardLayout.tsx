@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useEffect } from 'react';
 import { useLanguage } from '@/lib/i18n';
 import { useTheme } from '@/lib/theme';
 import { useAuth } from '@/lib/auth';
@@ -8,7 +9,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Moon, Sun, Globe, LogOut, MessageSquare, Lightbulb, User, BarChart3, Users, DollarSign } from 'lucide-react';
-import { checkSubscription } from '@/lib/subscription';
+
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -25,27 +26,6 @@ export default function DashboardLayout({ children, activeTab, onTabChange, tabs
 // ده جزء جوه الـ DashboardLayout بتاعك
 const [isBlocked, setIsBlocked] = useState(false);
 
-// الـ useEffect ده بيشتغل أول ما الصفحة تفتح
-useEffect(() => {
-  async function check() {
-    // افترض إنك عارف الـ orgId بتاع اليوزر اللي داخل
-    const status = await checkSubscription(user.org_id); 
-    if (status.blocked) {
-      setIsBlocked(true);
-    }
-  }
-  check();
-}, []);
-
-// لو الـ isBlocked بقت true، الصفحة هتقف وتظهر الرسالة دي
-if (isBlocked) {
-  return <div>اشتراكك انتهى، ادفع يا نجم!</div>;
-}
-
-// لو الـ isBlocked بـ false، الصفحة هتكمل عادي وتظهر الـ children
-return (
-   <div>{children}</div>
-);
 
 
   return (

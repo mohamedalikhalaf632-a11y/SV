@@ -48,7 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Create profile if doesn't exist
-    await supabase.from('profiles').insert({
+    await supabase.from('profiles').upsert({
       id: supaUser.id,
       email,
       role,
