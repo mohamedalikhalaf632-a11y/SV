@@ -151,7 +151,7 @@ const translations = {
     administration: 'الإدارة',
     cleanliness: 'النظافة',
     facilities: 'المرافق',
-    bulying: 'التنمر',
+    bullying: 'التنمر',
     schedule: 'الجدول',
     other: 'اخرى',
 
