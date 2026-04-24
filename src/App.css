@@ -40,3 +40,14 @@
 .read-the-docs {
   color: #888;
 }
+/* هذا الكود يمنع أي عنصر من التمدد خارج عرض الشاشة */
+body, html {
+  overflow-x: hidden;
+  width: 100%;
+  position: relative;
+}
+
+/* التأكد من أن كل العناصر تحترم حدود الحاوية */
+* {
+  box-sizing: border-box;
+}
