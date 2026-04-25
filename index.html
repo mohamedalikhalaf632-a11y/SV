@@ -13,6 +13,19 @@
     <meta property="og:description" content="Student complains" />
     <meta property="og:type" content="website" />
    
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+      <script>
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(async function(OneSignal) {
+          await OneSignal.init({
+            appId: "e353f6cc-42ca-4793-9135-607ebd938007",
+            safari_web_id: "web.onesignal.auto.24c5a223-602c-4339-a230-554aefc554b5",
+            notifyButton: {
+              enable: true,
+           },
+          });
+        });
+       </script>
   </head>
 
   <body>
