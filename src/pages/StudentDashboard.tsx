@@ -77,7 +77,15 @@ const { data: complaints = [] } = useQuery({
 }
 
 function ComplaintsTab({ userId, complaints, queryClient }: { userId: string; complaints: any[]; queryClient: any }) {
-  const { t } = useLanguage(); // تأكد أن دالة الترجمة معرفة هنا
+  const { t } = useLanguage();
+  const [title, setTitle] = useState(''); // تأكد من استيراد useState
+  const [description, setDescription] = useState('');
+
+  // دالة الإرسال (تأكد من ربطها بـ supabase)
+  const handleSubmit = async (e: any) => {
+    e.preventDefault();
+    // هنا كود الـ insert الخاص بك
+  };
 
   return (
     <Card>
@@ -85,39 +93,46 @@ function ComplaintsTab({ userId, complaints, queryClient }: { userId: string; co
         <CardTitle>{t('myComplaints')}</CardTitle>
       </CardHeader>
       <CardContent>
-        {complaints.length === 0 ? (
-          <p className="text-muted-foreground text-center py-8">{t('noComplaints')}</p>
-        ) : (
-          <div className="space-y-4">
-            {complaints.map((c: any) => (
-              <div key={c.id} className="p-4 border rounded shadow-sm">
-                <h4 className="font-bold">{c.title}</h4>
-                <p className="text-sm text-muted-foreground">{c.description}</p>
+        {/* --- نموذج تقديم الشكوى الجديد --- */}
+        <form onSubmit={handleSubmit} className="mb-8 p-4 border rounded-lg bg-slate-50">
+          <input 
+            placeholder={t('title')} 
+            value={title} 
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full p-2 mb-2 border rounded"
+          />
+          <textarea 
+            placeholder={t('description')} 
+            value={description} 
+            onChange={(e) => setDescription(e.target.value)}
+            className="w-full p-2 mb-2 border rounded"
+          />
+          <button type="submit" className="bg-purple-600 text-white px-4 py-2 rounded">
+            {t('submit')}
+          </button>
+        </form>
 
-                {/* الجزء الموحد للردود (بدون أي تكرار أو مستطيلات بيضاء) */}
-                <div className="mt-4 pt-4 border-t border-purple-200">
-                  <p className="text-xs font-bold text-purple-700 mb-2 uppercase tracking-wider">
-                    {t('supervisorReply')}:
-                  </p>
-
-                  {c.replies && c.replies.length > 0 ? (
-                    <div className="bg-purple-600 p-3 rounded-lg shadow-sm max-w-md w-full">
-                      {c.replies.map((reply: any) => (
-                        <p key={reply.id} className="text-white text-sm font-medium">
-                          {reply.message}
-                        </p>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="bg-purple-50 p-3 rounded-lg border border-purple-100 max-w-md w-full">
-                      <p className="text-purple-400 text-xs italic">{t('noReplyYet')}</p>
-                    </div>
-                  )}
-                </div>
+        {/* --- قائمة الشكاوى والردود (الكود المنظم) --- */}
+        <div className="space-y-4">
+          {complaints.map((c: any) => (
+            <div key={c.id} className="p-4 border rounded shadow-sm">
+              <h4 className="font-bold">{c.title}</h4>
+              <p className="text-sm text-muted-foreground">{c.description}</p>
+              
+              {/* قسم الردود */}
+              <div className="mt-4 pt-4 border-t border-purple-200">
+                <p className="text-xs font-bold text-purple-700 mb-2 uppercase">{t('supervisorReply')}:</p>
+                {c.replies && c.replies.length > 0 ? (
+                  <div className="bg-purple-600 p-3 rounded-lg max-w-md">
+                     {c.replies.map((r: any) => <p key={r.id} className="text-white text-sm">{r.message}</p>)}
+                  </div>
+                ) : (
+                  <p className="text-purple-400 text-xs italic">{t('noReplyYet')}</p>
+                )}
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          ))}
+        </div>
       </CardContent>
     </Card>
   );
