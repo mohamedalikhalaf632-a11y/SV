@@ -142,6 +142,25 @@ function ComplaintsTab({ userId, complaints, queryClient }: { userId: string; co
                     <div key={c.id} className="p-4 border rounded shadow-sm">
                         <h4 className="font-bold">{c.title}</h4>
                         <p>{c.description}</p>
+                        {/* عرض الردود بتنسيق بنفسجي احترافي */}
+                       <div className="mt-4 pt-4 border-t border-purple-200">
+                          <p className="text-sm font-bold text-purple-700 mb-2 uppercase tracking-wide">
+                              Supervisor Reply:
+                          </p>
+                          {c.replies && c.replies.length > 0 ? (
+                      <div className="bg-purple-600 p-4 rounded-xl shadow-md border border-purple-500">
+                       {c.replies.map((reply: any) => (
+        <p key={reply.id} className="text-white font-medium text-sm leading-relaxed">
+          {reply.message}
+        </p>
+      ))}
+    </div>
+  ) : (
+    <div className="bg-purple-100 p-3 rounded-lg border border-purple-200">
+      <p className="text-purple-600 text-sm italic">No reply yet.</p>
+    </div>
+  )}
+</div>
     
                                 {/* هنا الجزء المهم جداً لعرض الردود */}
                     <div className="mt-4 pt-2 border-t">
