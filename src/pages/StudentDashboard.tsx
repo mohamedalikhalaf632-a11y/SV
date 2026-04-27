@@ -137,7 +137,7 @@ function ComplaintsTab({ userId, complaints, queryClient }: { userId: string; co
             <p className="text-muted-foreground text-center py-8">{t('noComplaints')}</p>
           ) : (
             <div className="space-y-3">
-              // داخل الـ map الخاص بالشكاوى
+              
                 {complaints.map((c: any) => (
                     <div key={c.id} className="p-4 border rounded shadow-sm">
                         <h4 className="font-bold">{c.title}</h4>
