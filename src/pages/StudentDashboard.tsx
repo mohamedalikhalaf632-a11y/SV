@@ -76,112 +76,47 @@ const { data: complaints = [] } = useQuery({
   );
 }
 
-function ComplaintsTab({ userId, complaints, queryClient }: { userId: string; complaints: Complaint[]; queryClient: any }) {
-  const { t } = useLanguage();
-  const { toast } = useToast();
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('');
-
-  const submitMutation = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from('complaints').insert({
-        user_id: userId,
-        title: title.trim(),
-        description: description.trim(),
-        category,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast({ title: '✅', description: 'Complaint submitted successfully' });
-      setTitle(''); setDescription(''); setCategory('');
-      queryClient.invalidateQueries({ queryKey: ['my-complaints'] });
-    },
-    onError: (err: any) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
-  });
-
-  const categories = ['teacher', 'subject', 'administration', 'cleanliness', 'facilities', 'bullying', 'schedule', 'other'];
-
+function ComplaintsTab({ userId, complaints, queryClient }: { userId: string; complaints: any[]; queryClient: any }) {
   return (
-    <div className="space-y-6 animate-fade-in">
-      <Card className="shadow-card">
-        <CardHeader>
-          <CardTitle>{t('submitComplaint')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={e => { e.preventDefault(); submitMutation.mutate(); }} className="space-y-4">
-            <Input placeholder={t('title')} value={title} onChange={e => setTitle(e.target.value)} required />
-            <Textarea placeholder={t('description')} value={description} onChange={e => setDescription(e.target.value)} required rows={3} />
-            <Select value={category} onValueChange={setCategory} required>
-              <SelectTrigger><SelectValue placeholder={t('category')} /></SelectTrigger>
-              <SelectContent>
-                {categories.map(c => (
-                  <SelectItem key={c} value={c}>{t(c as any)}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button type="submit" className="gradient-primary text-primary-foreground" disabled={!category || submitMutation.isPending}>
-              {t('submit')}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+    <Card>
+      <CardHeader>
+        <CardTitle>My Complaints</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {complaints.length === 0 ? (
+          <p className="text-muted-foreground text-center py-8">No complaints yet.</p>
+        ) : (
+          <div className="space-y-4">
+            {complaints.map((c: any) => (
+              <div key={c.id} className="p-4 border rounded shadow-sm">
+                <h4 className="font-bold">{c.title}</h4>
+                <p className="text-sm">{c.description}</p>
 
-      <Card className="shadow-card">
-        <CardHeader>
-          <CardTitle>{t('myComplaints')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {complaints.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">{t('noComplaints')}</p>
-          ) : (
-            <div className="space-y-3">
-              
-                {complaints.map((c: any) => (
-                    <div key={c.id} className="p-4 border rounded shadow-sm">
-                        <h4 className="font-bold">{c.title}</h4>
-                        <p>{c.description}</p>
-                        {/* عرض الردود بتنسيق بنفسجي احترافي */}
-                       <div className="mt-4 pt-4 border-t border-purple-200">
-                          <p className="text-sm font-bold text-purple-700 mb-2 uppercase tracking-wide">
-                              Supervisor Reply:
-                          </p>
-                          {c.replies && c.replies.length > 0 ? (
-                      <div className="bg-purple-600 p-4 rounded-xl shadow-md border border-purple-500">
-                       {c.replies.map((reply: any) => (
-        <p key={reply.id} className="text-white font-medium text-sm leading-relaxed">
-          {reply.message}
-        </p>
-      ))}
-    </div>
-  ) : (
-    <div className="bg-purple-100 p-3 rounded-lg border border-purple-200">
-      <p className="text-purple-600 text-sm italic">No reply yet.</p>
-    </div>
-  )}
-</div>
-    
-                                {/* هنا الجزء المهم جداً لعرض الردود */}
-                    <div className="mt-4 pt-2 border-t">
-                        <p className="text-sm font-semibold">الردود:</p>
-                    {c.replies && c.replies.length > 0 ? (
-                      c.replies.map((reply: any) => (
-                        <div key={reply.id} className="bg-blue-50 p-2 mt-1 rounded text-sm">
+                {/* جزء الردود المُنظم */}
+                <div className="mt-4 pt-4 border-t border-purple-200">
+                  <p className="text-xs font-bold text-purple-700 mb-2 uppercase tracking-wider">
+                    Supervisor Reply:
+                  </p>
+                  {c.replies && c.replies.length > 0 ? (
+                    <div className="bg-purple-600 p-3 rounded-lg shadow-sm max-w-md">
+                      {c.replies.map((reply: any) => (
+                        <p key={reply.id} className="text-white text-sm font-medium">
                           {reply.message}
+                        </p>
+                      ))}
                     </div>
-                  ))
-                 ) : (
-                    <p className="text-gray-400 text-sm">لا يوجد رد حالياً.</p>
+                  ) : (
+                    <div className="bg-purple-100 p-3 rounded-lg border border-purple-200">
+                      <p className="text-purple-600 text-sm italic">No reply yet.</p>
+                    </div>
                   )}
-                  </div>
-            </div>
-    ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
