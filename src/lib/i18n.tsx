@@ -44,10 +44,10 @@ const translations = {
     mySuggestions: 'My Suggestions',
     noComplaints: 'No complaints yet',
     noSuggestions: 'No suggestions yet',
-    noReplyYet:'لا يوجد رد بعد',
-    supervisorReply:'رد المشرف: ',
-    myComplaint: 'شكاواي',
-    noComplaint: 'لا توجد شكاوى بعد',
+    noReplyYet:'No reply yet',
+    supervisorReply:'supervisor Reply',
+    myComplaint: 'My Complaint',
+    noComplaint: 'No complaints yet',
 
     // Categories
     teacher: 'Teacher',
@@ -150,7 +150,7 @@ const translations = {
     noComplaints: 'لا توجد شكاوى بعد',
     noSuggestions: 'لا توجد مقترحات بعد',
     noReplyYet:'لا يوجد رد بعد',
-    supervisorReply:'رد المشرف: ',
+    supervisorReply:'رد المشرف',
     myComplaint: 'شكاواي',
     noComplaint: 'لا توجد شكاوى بعد',
 
