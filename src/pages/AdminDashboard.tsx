@@ -27,7 +27,7 @@ export default function AdminDashboard() {
   const { data: complaints = [] } = useQuery({
     queryKey: ['admin-complaints'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('complaints').select('*').order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('complaints').select('*, replies(*)').order('created_at', { ascending: false });
       if (error) return dummyComplaints;
       return data as Complaint[];
     },
@@ -163,16 +163,35 @@ function AdminComplaintsTab({ complaints }: { complaints: Complaint[] }) {
   return (
     <div className="space-y-3 animate-fade-in">
       <h2 className="text-xl font-bold text-foreground">{t('allComplaints')}</h2>
-      {complaints.map(c => (
+      {complaints.map((c) => (
         <Card key={c.id} className="shadow-card">
           <CardContent className="pt-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div className="space-y-1">
-                <h3 className="font-semibold text-foreground">{c.title}</h3>
-                <p className="text-sm text-muted-foreground">{c.description}</p>
-                <div className="flex gap-2 flex-wrap"><CategoryBadge category={c.category} /><StatusBadge status={c.status as any} /></div>
+            <div className="flex flex-col gap-2">
+              <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                  <h4 className="font-medium text-foreground">{c.title}</h4>
+                  <p className="text-sm text-muted-foreground">{c.description}</p>
+                  <div className="flex gap-2 flex-wrap">
+                    <CategoryBadge category={c.category} />
+                    <span className="text-xs text-muted-foreground">{new Date(c.created_at).toLocaleDateString()}</span>
+                  </div>
+                </div>
+                <StatusBadge status={c.status as any} />
               </div>
-              <span className="text-xs text-muted-foreground whitespace-nowrap">{new Date(c.created_at).toLocaleDateString()}</span>
+
+              {/* --- هذا هو الجزء الناقص لعرض الردود --- */}
+              {c.replies && c.replies.length > 0 && (
+                <div className="mt-3 p-3 bg-purple-600/10 border border-purple-500/30 rounded-lg">
+                  <p className="text-[10px] font-bold text-purple-400 uppercase mb-1">
+                    {t('supervisorReply')}:
+                  </p>
+                  {c.replies.map((reply: any) => (
+                    <p key={reply.id} className="text-foreground text-sm font-medium">
+                      {reply.message}
+                    </p>
+                  ))}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -180,7 +199,6 @@ function AdminComplaintsTab({ complaints }: { complaints: Complaint[] }) {
     </div>
   );
 }
-
 function AdminSuggestionsTab({ suggestions }: { suggestions: Suggestion[] }) {
   const { t } = useLanguage();
   return (
