@@ -147,7 +147,7 @@ const translations = {
     submit: 'إرسال',
     myComplaints: 'شكاواي',
     mySuggestions: 'مقترحاتي',
-    noComplaints: 'لا توجد شكاوى بعد'
+    noComplaints: 'لا توجد شكاوى بعد',
     noSuggestions: 'لا توجد مقترحات بعد',
     noReplyYet:'لا يوجد رد بعد',
     supervisorReply:'رد المشرف: ',
