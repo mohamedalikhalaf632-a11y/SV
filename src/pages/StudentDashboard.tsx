@@ -27,18 +27,32 @@ export default function StudentDashboard() {
     { id: 'profile', label: t('profile'), icon: User },
   ];
 
-  const { data: complaints = [] } = useQuery({
-    queryKey: ['my-complaints'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('complaints')
-        .select('*, replies(*)') // أضف ,replies(*) هنا
-        .eq('user_id', user!.id)
-        .order('created_at', { ascending: false });
-      if (error) return dummyComplaints.filter(c => c.user_id === 'u1');
-      return data as Complaint[];
-    },
-  });
+const { data: complaints = [] } = useQuery({
+  queryKey: ['complaints'],
+  queryFn: async () => {
+    // نجلب الشكاوى أولاً
+    const { data, error } = await supabase
+      .from('complaints')
+      .select(`
+        id,
+        title,
+        description,
+        category,
+        status,
+        created_at,
+        replies (
+          id,
+          message,
+          created_at
+        )
+      `)
+      .eq('user_id', user!.id)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  },
+});
 
   const { data: suggestions = [] } = useQuery({
     queryKey: ['my-suggestions'],
