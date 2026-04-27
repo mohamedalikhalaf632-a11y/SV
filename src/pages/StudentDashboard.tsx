@@ -77,28 +77,31 @@ const { data: complaints = [] } = useQuery({
 }
 
 function ComplaintsTab({ userId, complaints, queryClient }: { userId: string; complaints: any[]; queryClient: any }) {
+  const { t } = useLanguage(); // تأكد أن دالة الترجمة معرفة هنا
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>My Complaints</CardTitle>
+        <CardTitle>{t('myComplaints')}</CardTitle>
       </CardHeader>
       <CardContent>
         {complaints.length === 0 ? (
-          <p className="text-muted-foreground text-center py-8">No complaints yet.</p>
+          <p className="text-muted-foreground text-center py-8">{t('noComplaints')}</p>
         ) : (
           <div className="space-y-4">
             {complaints.map((c: any) => (
               <div key={c.id} className="p-4 border rounded shadow-sm">
                 <h4 className="font-bold">{c.title}</h4>
-                <p className="text-sm">{c.description}</p>
+                <p className="text-sm text-muted-foreground">{c.description}</p>
 
-                {/* جزء الردود المُنظم */}
+                {/* الجزء الموحد للردود (بدون أي تكرار أو مستطيلات بيضاء) */}
                 <div className="mt-4 pt-4 border-t border-purple-200">
                   <p className="text-xs font-bold text-purple-700 mb-2 uppercase tracking-wider">
-                    Supervisor Reply:
+                    {t('supervisorReply')}:
                   </p>
+
                   {c.replies && c.replies.length > 0 ? (
-                    <div className="bg-purple-600 p-3 rounded-lg shadow-sm max-w-md">
+                    <div className="bg-purple-600 p-3 rounded-lg shadow-sm max-w-md w-full">
                       {c.replies.map((reply: any) => (
                         <p key={reply.id} className="text-white text-sm font-medium">
                           {reply.message}
@@ -106,8 +109,8 @@ function ComplaintsTab({ userId, complaints, queryClient }: { userId: string; co
                       ))}
                     </div>
                   ) : (
-                    <div className="bg-purple-100 p-3 rounded-lg border border-purple-200">
-                      <p className="text-purple-600 text-sm italic">No reply yet.</p>
+                    <div className="bg-purple-50 p-3 rounded-lg border border-purple-100 max-w-md w-full">
+                      <p className="text-purple-400 text-xs italic">{t('noReplyYet')}</p>
                     </div>
                   )}
                 </div>
