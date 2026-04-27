@@ -137,19 +137,27 @@ function ComplaintsTab({ userId, complaints, queryClient }: { userId: string; co
             <p className="text-muted-foreground text-center py-8">{t('noComplaints')}</p>
           ) : (
             <div className="space-y-3">
-              {complaints.map(c => (
-                <div key={c.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-lg border border-border bg-card hover:shadow-card transition-shadow gap-2">
-                  <div className="space-y-1">
-                    <h4 className="font-medium text-foreground">{c.title}</h4>
-                    <p className="text-sm text-muted-foreground line-clamp-1">{c.description}</p>
-                    <div className="flex gap-2 flex-wrap">
-                      <CategoryBadge category={c.category} />
-                      <span className="text-xs text-muted-foreground">{new Date(c.created_at).toLocaleDateString()}</span>
+              // داخل الـ map الخاص بالشكاوى
+                {complaints.map((c: any) => (
+                    <div key={c.id} className="p-4 border rounded shadow-sm">
+                        <h4 className="font-bold">{c.title}</h4>
+                        <p>{c.description}</p>
+    
+                                {/* هنا الجزء المهم جداً لعرض الردود */}
+                    <div className="mt-4 pt-2 border-t">
+                        <p className="text-sm font-semibold">الردود:</p>
+                    {c.replies && c.replies.length > 0 ? (
+                      c.replies.map((reply: any) => (
+                        <div key={reply.id} className="bg-blue-50 p-2 mt-1 rounded text-sm">
+                          {reply.message}
                     </div>
+                  ))
+                 ) : (
+                    <p className="text-gray-400 text-sm">لا يوجد رد حالياً.</p>
+                  )}
                   </div>
-                  <StatusBadge status={c.status as any} />
-                </div>
-              ))}
+            </div>
+    ))}
             </div>
           )}
         </CardContent>
