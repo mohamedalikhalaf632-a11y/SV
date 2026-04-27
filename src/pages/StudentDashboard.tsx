@@ -27,18 +27,31 @@ export default function StudentDashboard() {
     { id: 'profile', label: t('profile'), icon: User },
   ];
 
-  const { data: complaints = [] } = useQuery({
-    queryKey: ['my-complaints'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('complaints')
-        .select('*')
-        .eq('user_id', user!.id)
-        .order('created_at', { ascending: false });
-      if (error) return dummyComplaints.filter(c => c.user_id === 'u1');
-      return data as Complaint[];
-    },
-  });
+queryFn: async ()=> {
+  // 1. جلب الشكاوى الخاصة بالطالب
+  const { data: complaints, error: complaintsError } = await supabase
+    .from('complaints')
+    .select('*')
+    .eq('user_id', user!.id);
+
+  if (complaintsError) throw complaintsError;
+  if (!complaints || complaints.length === 0) return [];
+
+  // 2. جلب كل الردود الخاصة بجميع شكاوى هذا الطالب دفعة واحدة
+  const complaintIds = complaints.map(c => c.id);
+  const { data: allReplies, error: repliesError } = await supabase
+    .from('replies')
+    .select('*')
+    .in('complaint_id', complaintIds);
+
+  // 3. ربط الردود بالشكاوى برمجياً (هذا بديل للـ Relationship)
+  const combinedData = complaints.map(complaint => ({
+    ...complaint,
+    replies: allReplies?.filter(reply => reply.complaint_id === complaint.id) || []
+  }));
+
+  return combinedData as any; // نستخدم any لتجاوز أخطاء التعريفات
+}, 
 
   const { data: suggestions = [] } = useQuery({
     queryKey: ['my-suggestions'],
