@@ -1,4 +1,5 @@
 export interface Complaint {
+  replies: any;
   id: string;
   user_id: string;
   title: string;

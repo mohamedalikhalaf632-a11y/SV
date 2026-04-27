@@ -76,67 +76,106 @@ const { data: complaints = [] } = useQuery({
   );
 }
 
-function ComplaintsTab({ userId, complaints, queryClient }: { userId: string; complaints: any[]; queryClient: any }) {
+function ComplaintsTab({ userId, complaints, queryClient }: { userId: string; complaints: Complaint[]; queryClient: any }) {
   const { t } = useLanguage();
-  const [title, setTitle] = useState(''); // تأكد من استيراد useState
+  const { toast } = useToast();
+  const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [category, setCategory] = useState('');
 
-  // دالة الإرسال (تأكد من ربطها بـ supabase)
-  const handleSubmit = async (e: any) => {
-    e.preventDefault();
-    // هنا كود الـ insert الخاص بك
-  };
+  const submitMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from('complaints').insert({
+        user_id: userId,
+        title: title.trim(),
+        description: description.trim(),
+        category,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: '✅', description: 'Complaint submitted successfully' });
+      setTitle(''); setDescription(''); setCategory('');
+      queryClient.invalidateQueries({ queryKey: ['my-complaints'] });
+    },
+    onError: (err: any) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
+  });
+
+  const categories = ['teacher', 'subject', 'administration', 'cleanliness', 'facilities', 'bullying', 'schedule', 'other'];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t('myComplaints')}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {/* --- نموذج تقديم الشكوى الجديد --- */}
-        <form onSubmit={handleSubmit} className="mb-8 p-4 border rounded-lg bg-slate-50">
-          <input 
-            placeholder={t('title')} 
-            value={title} 
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full p-2 mb-2 border rounded"
-          />
-          <textarea 
-            placeholder={t('description')} 
-            value={description} 
-            onChange={(e) => setDescription(e.target.value)}
-            className="w-full p-2 mb-2 border rounded"
-          />
-          <button type="submit" className="bg-purple-600 text-white px-4 py-2 rounded">
-            {t('submit')}
-          </button>
-        </form>
+    <div className="space-y-6 animate-fade-in">
+      <Card className="shadow-card">
+        <CardHeader>
+          <CardTitle>{t('submitComplaint')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={e => { e.preventDefault(); submitMutation.mutate(); }} className="space-y-4">
+            <Input placeholder={t('title')} value={title} onChange={e => setTitle(e.target.value)} required />
+            <Textarea placeholder={t('description')} value={description} onChange={e => setDescription(e.target.value)} required rows={3} />
+            <Select value={category} onValueChange={setCategory} required>
+              <SelectTrigger><SelectValue placeholder={t('category')} /></SelectTrigger>
+              <SelectContent>
+                {categories.map(c => (
+                  <SelectItem key={c} value={c}>{t(c as any)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button type="submit" className="gradient-primary text-primary-foreground" disabled={!category || submitMutation.isPending}>
+              {t('submit')}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
-        {/* --- قائمة الشكاوى والردود (الكود المنظم) --- */}
-        <div className="space-y-4">
-          {complaints.map((c: any) => (
-            <div key={c.id} className="p-4 border rounded shadow-sm">
-              <h4 className="font-bold">{c.title}</h4>
-              <p className="text-sm text-muted-foreground">{c.description}</p>
-              
-              {/* قسم الردود */}
-              <div className="mt-4 pt-4 border-t border-purple-200">
-                <p className="text-xs font-bold text-purple-700 mb-2 uppercase">{t('supervisorReply')}:</p>
-                {c.replies && c.replies.length > 0 ? (
-                  <div className="bg-purple-600 p-3 rounded-lg max-w-md">
-                     {c.replies.map((r: any) => <p key={r.id} className="text-white text-sm">{r.message}</p>)}
+      <Card className="shadow-card">
+        <CardHeader>
+          <CardTitle>{t('myComplaints')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {complaints.length === 0 ? (
+            <p className="text-muted-foreground text-center py-8">{t('noComplaints')}</p>
+          ) : (
+            <div className="space-y-3">
+              {complaints.map(c => (
+                <div key={c.id} className="flex flex-col p-4 rounded-lg border border-border bg-card gap-2">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-1">
+                      <h4 className="font-medium text-foreground">{c.title}</h4>
+                      <p className="text-sm text-muted-foreground">{c.description}</p>
+                      <div className="flex gap-2 flex-wrap">
+                        <CategoryBadge category={c.category} />
+                        <span className="text-xs text-muted-foreground">{new Date(c.created_at).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                    <StatusBadge status={c.status as any} />
                   </div>
-                ) : (
-                  <p className="text-purple-400 text-xs italic">{t('noReplyYet')}</p>
-                )}
-              </div>
+
+                  {/* بوكس الرد البنفسجي - فقط إذا وُجد رد */}
+                  {/* بوكس الرد المحدث */}
+{c.replies && c.replies.length > 0 && (
+  <div className="mt-3 p-3 bg-purple-600/10 border border-purple-500/30 rounded-lg">
+    <p className="text-[10px] font-bold text-purple-400 uppercase mb-1">
+      {t('supervisorReply')}:
+    </p>
+    {c.replies.map((reply: any) => (
+      <p key={reply.id} className="text-foreground text-sm font-medium">
+        {reply.message}
+      </p>
+    ))}
+  </div>
+
+                  )}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
+
 
 function SuggestionsTab({ userId, suggestions, queryClient }: { userId: string; suggestions: Suggestion[]; queryClient: any }) {
   const { t } = useLanguage();
