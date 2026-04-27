@@ -51,7 +51,7 @@ queryFn: async ()=> {
   }));
 
   return combinedData as any; // نستخدم any لتجاوز أخطاء التعريفات
-}, 
+}
 
   const { data: suggestions = [] } = useQuery({
     queryKey: ['my-suggestions'],
