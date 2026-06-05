@@ -7,10 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Moon, Sun, Globe } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
+  const [role, setRole] = useState<'student' | 'supervisor' | 'admin'>('student');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,7 +33,7 @@ export default function AuthPage() {
       if (isLogin) {
         await signIn(email, password);
       } else {
-        await signUp(email, password);
+        await signUp(email, password, username, role);
       }
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
@@ -65,6 +68,16 @@ export default function AuthPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+                <div className="space-y-2 animate-fade-in">
+                  <label className="text-sm font-medium text-foreground">{t('username')}</label>
+                  <Input
+                    type="text"
+                    value={username}
+                    onChange={e => setUsername(e.target.value)}
+                    placeholder="Ahmed"
+                    required
+                  />
+                </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">{t('email')}</label>
@@ -88,17 +101,34 @@ export default function AuthPage() {
               />
             </div>
             {!isLogin && (
-              <div className="space-y-2 animate-fade-in">
-                <label className="text-sm font-medium text-foreground">{t('confirmPassword')}</label>
-                <Input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={e => setConfirmPassword(e.target.value)}
-                  placeholder="*********"
-                  required
-                  minLength={6}
-                />
-              </div>
+              <>
+                <div className="space-y-2 animate-fade-in">
+                  <label className="text-sm font-medium text-foreground">{t('confirmPassword')}</label>
+                  <Input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    placeholder="*********"
+                    required
+                    minLength={6}
+                  />
+                </div>
+
+                <div className="space-y-2 animate-fade-in">
+                  <label className="text-sm font-medium text-foreground">Role</label>
+                  <select
+                    aria-label="Select your role"
+                    value={role}
+                    onChange={e => setRole(e.target.value as 'student' | 'supervisor' | 'admin')}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    required
+                  >
+                    <option value="student">Student</option>
+                    <option value="supervisor">Supervisor</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+              </>
             )}
             <Button type="submit" className="w-full gradient-primary text-primary-foreground" disabled={loading}>
               {loading ? (isLogin ? t('loggingIn') : t('signingUp')) : (isLogin ? t('login') : t('signup'))}

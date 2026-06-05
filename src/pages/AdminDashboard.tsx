@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { useLanguage } from '@/lib/i18n';
-import { useAuth } from '@/lib/auth';
 import DashboardLayout from '@/components/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge, CategoryBadge } from '@/components/StatusBadge';
-import { MessageSquare, Lightbulb, Users, BarChart3, DollarSign } from 'lucide-react';
+import { MessageSquare, Lightbulb, Users, BarChart3 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import { dummyComplaints, dummySuggestions, getPricingTier, type Complaint, type Suggestion } from '@/lib/dummy-data';
+import { type Complaint, type Suggestion } from '@/lib/dummy-data';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 
 const CHART_COLORS = ['hsl(270,70%,55%)', 'hsl(290,65%,60%)', 'hsl(330,70%,60%)', 'hsl(210,100%,52%)', 'hsl(145,65%,42%)'];
@@ -21,14 +20,13 @@ export default function AdminDashboard() {
     { id: 'complaints', label: t('complaints'), icon: MessageSquare },
     { id: 'suggestions', label: t('suggestions'), icon: Lightbulb },
     { id: 'users', label: t('users'), icon: Users },
-    { id: 'pricing', label: t('pricing'), icon: DollarSign },
   ];
 
   const { data: complaints = [] } = useQuery({
     queryKey: ['admin-complaints'],
     queryFn: async () => {
       const { data, error } = await supabase.from('complaints').select('*, replies(*)').order('created_at', { ascending: false });
-      if (error) return dummyComplaints;
+      if (error) return [];
       return data as Complaint[];
     },
   });
@@ -37,7 +35,7 @@ export default function AdminDashboard() {
     queryKey: ['admin-suggestions'],
     queryFn: async () => {
       const { data, error } = await supabase.from('suggestions').select('*').order('created_at', { ascending: false });
-      if (error) return dummySuggestions;
+      if (error) return [];
       return data as Suggestion[];
     },
   });
@@ -59,7 +57,6 @@ export default function AdminDashboard() {
       {activeTab === 'complaints' && <AdminComplaintsTab complaints={complaints} />}
       {activeTab === 'suggestions' && <AdminSuggestionsTab suggestions={suggestions} />}
       {activeTab === 'users' && <UsersTab profiles={profiles} />}
-      {activeTab === 'pricing' && <PricingTab studentCount={studentCount} />}
     </DashboardLayout>
   );
 }
@@ -247,55 +244,3 @@ function UsersTab({ profiles }: { profiles: any[] }) {
   );
 }
 
-function PricingTab({ studentCount }: { studentCount: number }) {
-  const { t } = useLanguage();
-  const pricing = getPricingTier(studentCount);
-
-  const tiers = [
-    { range: '0 - 50', price: 500, active: studentCount <= 50 },
-    { range: '51 - 200', price: 1000, active: studentCount > 50 && studentCount <= 200 },
-    { range: '201 - 500', price: 1500, active: studentCount > 200 && studentCount <= 500 },
-    { range: '500+', price: 2000, active: studentCount > 500 },
-  ];
-
-  return (
-    <div className="space-y-6 animate-fade-in">
-      <Card className="shadow-elevated">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5 text-primary" />
-            {t('pricingTier')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="p-4 rounded-xl bg-muted text-center">
-              <p className="text-sm text-muted-foreground">{t('activeStudents')}</p>
-              <p className="text-3xl font-bold text-foreground">{studentCount}</p>
-            </div>
-            <div className="p-4 rounded-xl gradient-primary text-center">
-              <p className="text-sm text-primary-foreground/80">{t('currentTier')}</p>
-              <p className="text-3xl font-bold text-primary-foreground">{pricing.tier}</p>
-            </div>
-            <div className="p-4 rounded-xl bg-muted text-center">
-              <p className="text-sm text-muted-foreground">{t('monthlyPrice')}</p>
-              <p className="text-3xl font-bold text-foreground">{pricing.price} <span className="text-sm font-normal">{t('egpMonth')}</span></p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {tiers.map((tier, i) => (
-          <Card key={i} className={`shadow-card transition-all ${tier.active ? 'ring-2 ring-primary shadow-primary' : ''}`}>
-            <CardContent className="pt-6 text-center space-y-2">
-              <p className="text-sm text-muted-foreground">{tier.range} {t('users').toLowerCase()}</p>
-              <p className="text-2xl font-bold text-foreground">{tier.price} <span className="text-sm font-normal text-muted-foreground">{t('egpMonth')}</span></p>
-              {tier.active && <p className="text-xs font-medium text-primary">● {t('currentTier')}</p>}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-}

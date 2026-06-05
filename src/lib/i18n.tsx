@@ -7,6 +7,7 @@ const translations = {
     // Auth
     login: 'Login',
     signup: 'Sign Up',
+    username: 'Username',
     email: 'Email',
     password: 'Password',
     confirmPassword: 'Confirm Password',
@@ -27,7 +28,7 @@ const translations = {
     dashboard: 'Dashboard',
     users: 'Users',
     analytics: 'Analytics',
-    pricing: 'Pricing',
+    
     logout: 'Logout',
 
     // Student
@@ -88,12 +89,7 @@ const translations = {
     supervisor: 'Supervisor',
     admin: 'Admin',
 
-    // Pricing
-    pricingTier: 'Pricing Tier',
-    currentTier: 'Current Tier',
-    monthlyPrice: 'Monthly Price',
-    activeStudents: 'Active Students',
-    egpMonth: 'EGP/month',
+   
 
     // General
     darkMode: 'Dark Mode',
@@ -133,7 +129,7 @@ const translations = {
     dashboard: 'لوحة التحكم',
     users: 'المستخدمون',
     analytics: 'التحليلات',
-    pricing: 'التسعير',
+    username: 'اسم المستخدم',
     logout: 'تسجيل الخروج',
 
     submitComplaint: 'تقديم شكوى',
@@ -189,11 +185,7 @@ const translations = {
     supervisor: 'مشرف',
     admin: 'مدير',
 
-    pricingTier: 'فئة التسعير',
-    currentTier: 'الفئة الحالية',
-    monthlyPrice: 'السعر الشهري',
-    activeStudents: 'الطلاب النشطون',
-    egpMonth: 'جنيه/شهر',
+ 
 
     darkMode: 'الوضع الداكن',
     lightMode: 'الوضع الفاتح',

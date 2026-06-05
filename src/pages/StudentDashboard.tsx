@@ -12,7 +12,7 @@ import { MessageSquare, Lightbulb, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
-import { dummyComplaints, dummySuggestions, type Complaint, type Suggestion } from '@/lib/dummy-data';
+import { type Complaint, type Suggestion } from '@/lib/dummy-data';
 
 export default function StudentDashboard() {
   const { t } = useLanguage();
@@ -27,7 +27,7 @@ export default function StudentDashboard() {
     { id: 'profile', label: t('profile'), icon: User },
   ];
 
-const { data: complaints = [] } = useQuery({
+const { data: complaints = [] } = useQuery<Complaint[]>({
   queryKey: ['complaints'],
   queryFn: async () => {
     // نجلب الشكاوى أولاً
@@ -35,6 +35,7 @@ const { data: complaints = [] } = useQuery({
       .from('complaints')
       .select(`
         id,
+        user_id,
         title,
         description,
         category,
@@ -50,11 +51,11 @@ const { data: complaints = [] } = useQuery({
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return (data || []) as Complaint[];
   },
 });
 
-  const { data: suggestions = [] } = useQuery({
+  const { data: suggestions = [] } = useQuery<Suggestion[]>({
     queryKey: ['my-suggestions'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -62,7 +63,7 @@ const { data: complaints = [] } = useQuery({
         .select('*')
         .eq('user_id', user!.id)
         .order('created_at', { ascending: false });
-      if (error) return dummySuggestions.filter(s => s.user_id === 'u1');
+      if (error) return [] as Suggestion[];
       return data as Suggestion[];
     },
   });
@@ -96,7 +97,7 @@ function ComplaintsTab({ userId, complaints, queryClient }: { userId: string; co
     onSuccess: () => {
       toast({ title: '✅', description: 'Complaint submitted successfully' });
       setTitle(''); setDescription(''); setCategory('');
-      queryClient.invalidateQueries({ queryKey: ['my-complaints'] });
+      queryClient.invalidateQueries({ queryKey: ['complaints'] });
     },
     onError: (err: any) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
   });

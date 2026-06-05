@@ -8,6 +8,7 @@ interface AuthUser {
   id: string;
   email: string;
   role: UserRole;
+  username?: string | null;
 }
 
 interface AuthContextType {
@@ -15,7 +16,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<string>;
+  signUp: (email: string, password: string, username: string, role: UserRole) => Promise<string>;
   signOut: () => Promise<void>;
 }
 
@@ -23,6 +24,17 @@ function getRoleFromEmail(email: string): UserRole {
   if (email.endsWith('@we.org')) return 'admin';
   if (email.endsWith('@we.edu')) return 'supervisor';
   return 'student';
+}
+
+function getRoleFromUser(user: User): UserRole {
+  const metadataRole = user.user_metadata?.role;
+  return metadataRole === 'student' || metadataRole === 'supervisor' || metadataRole === 'admin'
+    ? metadataRole
+    : getRoleFromEmail(user.email || '');
+}
+
+export function getDisplayName(user: Pick<User, 'email' | 'user_metadata'>): string {
+  return user.user_metadata?.username || user.email?.split('@')[0] || 'User';
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,27 +46,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const buildAuthUser = async (supaUser: User): Promise<AuthUser> => {
     const email = supaUser.email || '';
-    const role = getRoleFromEmail(email);
+    const username = getDisplayName(supaUser);
+    const role = getRoleFromUser(supaUser);
 
-    // Try to fetch existing profile
     const { data: profile } = await supabase
       .from('profiles')
-      .select('role')
+      .select('role, username, is_approved')
       .eq('id', supaUser.id)
-      .single();
+      .maybeSingle();
 
     if (profile) {
-      return { id: supaUser.id, email, role: profile.role as UserRole };
+      return {
+        id: supaUser.id,
+        email,
+        role: (profile.role as UserRole) || role,
+        username: profile.username || username,
+      };
     }
 
-    // Create profile if doesn't exist
     await supabase.from('profiles').upsert({
       id: supaUser.id,
       email,
+      username,
       role,
-    });
+      is_approved: false,
+    }, { onConflict: 'id' });
 
-    return { id: supaUser.id, email, role };
+    await supabase.from('user_roles').upsert({
+      user_id: supaUser.id,
+      role,
+    }, { onConflict: 'user_id,role' });
+
+    return { id: supaUser.id, email, role, username };
   };
 
   useEffect(() => {
@@ -95,11 +118,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error) throw error;
   };
 
-  const signUp = async (email: string, password: string): Promise<string> => {
+  const signUp = async (email: string, password: string, username: string, role: UserRole): Promise<string> => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: window.location.origin },
+      options: {
+        emailRedirectTo: window.location.origin,
+        data: { username: username.trim(), role },
+      },
     });
     if (error) throw error;
     return 'checkEmail';

@@ -49,22 +49,31 @@ export type Database = {
       }
       profiles: {
         Row: {
+          approved_at: string | null
           created_at: string
           email: string
           id: string
+          is_approved: boolean
           role: Database["public"]["Enums"]["app_role"]
+          username: string | null
         }
         Insert: {
+          approved_at?: string | null
           created_at?: string
           email: string
           id: string
+          is_approved?: boolean
           role?: Database["public"]["Enums"]["app_role"]
+          username?: string | null
         }
         Update: {
+          approved_at?: string | null
           created_at?: string
           email?: string
           id?: string
+          is_approved?: boolean
           role?: Database["public"]["Enums"]["app_role"]
+          username?: string | null
         }
         Relationships: []
       }

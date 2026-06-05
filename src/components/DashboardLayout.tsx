@@ -78,7 +78,7 @@ const [isBlocked, setIsBlocked] = useState(false);
           <header className="h-14 flex items-center justify-between border-b border-border px-4">
             <div className="flex items-center gap-2">
               <SidebarTrigger />
-              <span className="text-sm text-muted-foreground">{user?.email}</span>
+              <span className="text-sm text-muted-foreground">{user?.username || user?.email}</span>
             </div>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="icon" onClick={toggleTheme}>

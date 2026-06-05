@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useLanguage } from '@/lib/i18n';
 import { useAuth } from '@/lib/auth';
 import DashboardLayout from '@/components/DashboardLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -11,14 +11,13 @@ import { MessageSquare, Lightbulb, MessageCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
-import { dummyComplaints, dummySuggestions, dummyReplies, type Complaint, type Suggestion, type Reply } from '@/lib/dummy-data';
+import { type Complaint, type Suggestion, type Reply } from '@/lib/dummy-data';
 
 export default function SupervisorDashboard() {
   const { t } = useLanguage();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('complaints');
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   const tabs = [
     { id: 'complaints', label: t('allComplaints'), icon: MessageSquare },
@@ -32,7 +31,8 @@ export default function SupervisorDashboard() {
         .from('complaints')
         .select('*')
         .order('created_at', { ascending: false });
-      if (error) return dummyComplaints;
+
+      if (error) return [] as Complaint[];
       return data as Complaint[];
     },
   });
@@ -44,120 +44,147 @@ export default function SupervisorDashboard() {
         .from('suggestions')
         .select('*')
         .order('created_at', { ascending: false });
-      if (error) return dummySuggestions;
+
+      if (error) return [] as Suggestion[];
       return data as Suggestion[];
     },
   });
 
   return (
     <DashboardLayout activeTab={activeTab} onTabChange={setActiveTab} tabs={tabs}>
-      {activeTab === 'complaints' && <SupervisorComplaints complaints={complaints} userId={user!.id} queryClient={queryClient} />}
+      {activeTab === 'complaints' && (
+        <SupervisorComplaints
+          complaints={complaints}
+          userId={user!.id}
+          userRole={user?.role || 'supervisor'}
+        />
+      )}
       {activeTab === 'suggestions' && <SupervisorSuggestions suggestions={suggestions} />}
     </DashboardLayout>
   );
 }
 
-function SupervisorComplaints({ complaints, userId, queryClient }: { complaints: Complaint[]; userId: string; queryClient: any }) {
+function SupervisorComplaints({
+  complaints,
+  userId,
+  userRole,
+}: {
+  complaints: Complaint[];
+  userId: string;
+  userRole: string;
+}) {
   const { t } = useLanguage();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
   const [replyText, setReplyText] = useState<Record<string, string>>({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const { data: replies = [] } = useQuery({
     queryKey: ['all-replies'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('replies').select('*').order('created_at', { ascending: true });
-      if (error) return dummyReplies;
-      return data as Reply[];
-    },
-  });
+      const { data } = await supabase
+        .from('replies')
+        .select('*')
+        .order('created_at', { ascending: true });
 
-  const statusMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const { error } = await supabase.from('complaints').update({ status }).eq('id', id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['all-complaints'] });
-      toast({ title: '✅', description: 'Status updated' });
+      return (data || []) as Reply[];
     },
   });
 
   const replyMutation = useMutation({
-    mutationFn: async ({ complaintId, message }: { complaintId: string; message: string }) => {
+    mutationFn: async ({ complaintId, message }: any) => {
       const { error } = await supabase.from('replies').insert({
         complaint_id: complaintId,
         user_id: userId,
         message: message.trim(),
+        role: userRole,
       });
+
       if (error) throw error;
     },
-    onSuccess: (_, { complaintId }) => {
-      setReplyText(prev => ({ ...prev, [complaintId]: '' }));
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['all-replies'] });
-      toast({ title: '✅', description: 'Reply sent' });
     },
   });
 
   return (
-    <div className="space-y-4 animate-fade-in">
-      <h2 className="text-xl font-bold text-foreground">{t('allComplaints')}</h2>
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold">{t('allComplaints')}</h2>
+
       {complaints.map(c => {
         const complaintReplies = replies.filter(r => r.complaint_id === c.id);
         const isExpanded = expandedId === c.id;
+
         return (
-          <Card key={c.id} className="shadow-card">
+          <Card key={c.id}>
             <CardContent className="pt-4 space-y-3">
-              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
-                <div className="space-y-1 flex-1">
-                  <h3 className="font-semibold text-foreground">{c.title}</h3>
-                  <p className="text-sm text-muted-foreground">{c.description}</p>
-                  <div className="flex gap-2 flex-wrap items-center">
-                    <CategoryBadge category={c.category} />
-                    <StatusBadge status={c.status as any} />
-                    <span className="text-xs text-muted-foreground">{new Date(c.created_at).toLocaleDateString()}</span>
-                  </div>
-                </div>
-                <Select value={c.status} onValueChange={status => statusMutation.mutate({ id: c.id, status })}>
-                  <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending">{t('pending')}</SelectItem>
-                    <SelectItem value="in_review">{t('inReview')}</SelectItem>
-                    <SelectItem value="resolved">{t('resolved')}</SelectItem>
-                  </SelectContent>
-                </Select>
+
+              <div>
+                <h3 className="font-semibold">{c.title}</h3>
+                <p className="text-sm text-muted-foreground">{c.description}</p>
               </div>
 
-              <Button variant="ghost" size="sm" onClick={() => setExpandedId(isExpanded ? null : c.id)}>
-                <MessageCircle className="h-4 w-4 mr-1" />
-                {t('replies')} ({complaintReplies.length})
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setExpandedId(isExpanded ? null : c.id)}
+              >
+                الردود ({complaintReplies.length})
               </Button>
 
               {isExpanded && (
-                <div className="space-y-2 animate-fade-in">
+                <div className="space-y-2">
+
+                  {/* 💬 الرسائل */}
                   {complaintReplies.map(r => (
-                    <div key={r.id} className="p-3 rounded-md bg-muted text-sm">
-                      <p className="text-foreground">{r.message}</p>
-                      <span className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</span>
+                    <div
+                      key={r.id}
+                      className={`max-w-[75%] p-3 rounded-2xl text-sm ${
+                        r.role === 'admin'
+                          ? 'ml-auto bg-yellow-200 text-black shadow-[0_0_12px_#FFD700]'
+                          : r.role === 'supervisor'
+                          ? 'mr-auto bg-purple-200 text-black shadow-[0_0_12px_#A855F7]'
+                          : 'bg-muted'
+                      }`}
+                    >
+                      <p>{r.message}</p>
                     </div>
                   ))}
+
+                  {/* 💬 بوكس الإرسال (واحد فقط للجميع) */}
                   <div className="flex gap-2">
                     <Textarea
-                      placeholder={t('replyPlaceholder')}
+                      placeholder="اكتب ردك..."
                       value={replyText[c.id] || ''}
-                      onChange={e => setReplyText(prev => ({ ...prev, [c.id]: e.target.value }))}
+                      onChange={e =>
+                        setReplyText(prev => ({
+                          ...prev,
+                          [c.id]: e.target.value,
+                        }))
+                      }
                       rows={2}
                       className="flex-1"
                     />
+
                     <Button
-                      size="sm"
-                      className="gradient-primary text-primary-foreground self-end"
-                      onClick={() => replyMutation.mutate({ complaintId: c.id, message: replyText[c.id] || '' })}
+                      onClick={() =>
+                        replyMutation.mutate({
+                          complaintId: c.id,
+                          message: replyText[c.id] || '',
+                        })
+                      }
                       disabled={!replyText[c.id]?.trim()}
+                      className={
+                        userRole === 'admin'
+                          ? 'bg-yellow-400 text-black shadow-[0_0_10px_#FFD700]'
+                          : 'bg-purple-500 text-white shadow-[0_0_10px_#A855F7]'
+                      }
                     >
-                      {t('sendReply')}
+                      إرسال
                     </Button>
                   </div>
+
                 </div>
               )}
             </CardContent>
@@ -168,17 +195,14 @@ function SupervisorComplaints({ complaints, userId, queryClient }: { complaints:
   );
 }
 
-function SupervisorSuggestions({ suggestions }: { suggestions: Suggestion[] }) {
-  const { t } = useLanguage();
+function SupervisorSuggestions({ suggestions }: any) {
   return (
-    <div className="space-y-4 animate-fade-in">
-      <h2 className="text-xl font-bold text-foreground">{t('allSuggestions')}</h2>
-      {suggestions.map(s => (
-        <Card key={s.id} className="shadow-card">
+    <div className="space-y-4">
+      {suggestions.map((s: any) => (
+        <Card key={s.id}>
           <CardContent className="pt-4">
-            <h3 className="font-semibold text-foreground">{s.title}</h3>
-            <p className="text-sm text-muted-foreground mt-1">{s.description}</p>
-            <span className="text-xs text-muted-foreground">{new Date(s.created_at).toLocaleDateString()}</span>
+            <h3>{s.title}</h3>
+            <p>{s.description}</p>
           </CardContent>
         </Card>
       ))}
