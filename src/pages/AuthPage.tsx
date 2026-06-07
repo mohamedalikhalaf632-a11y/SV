@@ -16,7 +16,9 @@ export default function AuthPage() {
   const [role, setRole] = useState<'student' | 'supervisor' | 'admin'>('student');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
   const [loading, setLoading] = useState(false);
+
   const { signIn, signUp } = useAuth();
   const { t, lang, setLang } = useLanguage();
   const { theme, toggleTheme } = useTheme();
@@ -24,19 +26,83 @@ export default function AuthPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!isLogin && password !== confirmPassword) {
-      toast({ title: 'Error', description: 'Passwords do not match', variant: 'destructive' });
+      toast({
+        title: 'Error',
+        description: 'Passwords do not match',
+        variant: 'destructive',
+      });
       return;
     }
+
     setLoading(true);
+
     try {
       if (isLogin) {
-        await signIn(email, password);
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) throw error;
+
+        // 🔥 check approval status
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
+
+        if (profile?.status === 'pending') {
+          await supabase.auth.signOut();
+          toast({
+            title: '⏳ Pending Approval',
+            description: 'Your account is waiting for admin approval',
+          });
+          return;
+        }
+
+        if (profile?.status === 'rejected') {
+          await supabase.auth.signOut();
+          toast({
+            title: '❌ Rejected',
+            description: 'Your account has been rejected',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        signIn(email, password);
       } else {
-        await signUp(email, password, username, role);
+        if (role === 'supervisor' || role === 'admin') {
+  const { data, error } = await supabase
+    .from('role_codes')
+    .select('*')
+    .eq('code', inviteCode``)
+    .eq('role', role)
+    .single();
+
+  if (error || !data) {
+    toast({
+      title: 'Invalid Code',
+      description: 'Activation code is incorrect',
+      variant: 'destructive',
+    });
+
+    setLoading(false);
+    return;
+  }
+}
+
+await signUp(email, password, username, role);
       }
     } catch (err: any) {
-      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+      toast({
+        title: 'Error',
+        description: err.message,
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
@@ -44,22 +110,21 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      {/* Theme & Language toggles */}
+
+      {/* Top Controls */}
       <div className="fixed top-4 right-4 flex gap-2 z-50">
         <Button variant="outline" size="icon" onClick={toggleTheme}>
           {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </Button>
+
         <Button variant="outline" size="sm" onClick={() => setLang(lang === 'en' ? 'ar' : 'en')}>
           <Globe className="h-4 w-4 mr-1" />
           {lang === 'en' ? 'عربي' : 'EN'}
         </Button>
       </div>
 
-      <Card className="w-full max-w-md animate-scale-in shadow-elevated border-border/50">
-        <CardHeader className="text-center space-y-2">
-          <div className="mx-auto w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center mb-2">
-            <span className="text-2xl font-bold text-primary-foreground">SV</span>
-          </div>
+      <Card className="w-full max-w-md shadow-elevated">
+        <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">
             {isLogin ? t('loginTitle') : t('signupTitle')}
           </CardTitle>
@@ -67,82 +132,107 @@ export default function AuthPage() {
             {isLogin ? t('loginSubtitle') : t('signupSubtitle')}
           </CardDescription>
         </CardHeader>
+
         <CardContent>
-                <div className="space-y-2 animate-fade-in">
-                  <label className="text-sm font-medium text-foreground">{t('username')}</label>
-                  <Input
-                    type="text"
-                    value={username}
-                    onChange={e => setUsername(e.target.value)}
-                    placeholder="Ahmed"
-                    required
-                  />
-                </div>
+
+          {/* Username */}
+          {!isLogin && (
+            <div className="space-y-2 mb-4">
+              <label className="text-sm">Username</label>
+              <Input
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                required
+              />
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
+
+            {/* Email */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">{t('email')}</label>
+              <label>Email</label>
               <Input
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                placeholder="example@gmail.com"
                 required
               />
             </div>
+
+            {/* Password */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">{t('password')}</label>
+              <label>Password</label>
               <Input
                 type="password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                placeholder="*********"
                 required
-                minLength={6}
               />
             </div>
-            {!isLogin && (
-              <>
-                <div className="space-y-2 animate-fade-in">
-                  <label className="text-sm font-medium text-foreground">{t('confirmPassword')}</label>
-                  <Input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={e => setConfirmPassword(e.target.value)}
-                    placeholder="*********"
-                    required
-                    minLength={6}
-                  />
-                </div>
 
-                <div className="space-y-2 animate-fade-in">
-                  <label className="text-sm font-medium text-foreground">Role</label>
-                  <select
-                    aria-label="Select your role"
-                    value={role}
-                    onChange={e => setRole(e.target.value as 'student' | 'supervisor' | 'admin')}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    required
-                  >
-                    <option value="student">Student</option>
-                    <option value="supervisor">Supervisor</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </div>
-              </>
+            {/* Confirm Password */}
+            {!isLogin && (
+              <div className="space-y-2">
+                <label>Confirm Password</label>
+                <Input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  required
+                />
+              </div>
             )}
-            <Button type="submit" className="w-full gradient-primary text-primary-foreground" disabled={loading}>
-              {loading ? (isLogin ? t('loggingIn') : t('signingUp')) : (isLogin ? t('login') : t('signup'))}
+
+{/* Role */}
+{!isLogin && (
+  <>
+    <div className="space-y-2">
+      <label>Role</label>
+
+      <select
+        value={role}
+        onChange={(e) =>
+          setRole(e.target.value as 'student' | 'supervisor' | 'admin')
+        }
+        className="w-full h-11 rounded-lg border border-input bg-background px-3"
+      >
+        <option value="student">🎓 Student</option>
+        <option value="supervisor">👨‍🏫 Supervisor</option>
+        <option value="admin">⚙️ Admin</option>
+      </select>
+    </div>
+
+    {(role === 'supervisor' || role === 'admin') && (
+      <div className="space-y-2">
+        <label>Activation Code</label>
+
+        <Input
+          type="text"
+          value={inviteCode}
+          onChange={(e) => setInviteCode(e.target.value)}
+          placeholder="Enter activation code"
+          required
+        />
+      </div>
+    )}
+  </>
+)}
+
+            {/* Submit */}
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Loading...' : isLogin ? 'Login' : 'Sign Up'}
             </Button>
+
           </form>
-          <div className="mt-4 text-center">
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-sm text-primary hover:underline"
-            >
-              {isLogin ? t('noAccount') : t('hasAccount')}
+
+          {/* Toggle */}
+          <div className="text-center mt-4">
+            <button onClick={() => setIsLogin(!isLogin)} className="text-sm underline">
+              {isLogin ? 'Create account' : 'Already have account'}
             </button>
           </div>
+
         </CardContent>
       </Card>
     </div>
