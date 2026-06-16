@@ -24,8 +24,9 @@ export default function AuthPage() {
   const { theme, toggleTheme } = useTheme();
   const { toast } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+const handleSubmit = async (e: React.FormEvent) => {
+  console.log("HANDLE SUBMIT WORKING");
+  e.preventDefault();
 
     if (!isLogin && password !== confirmPassword) {
       toast({
