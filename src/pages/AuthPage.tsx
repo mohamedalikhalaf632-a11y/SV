@@ -24,9 +24,8 @@ export default function AuthPage() {
   const { theme, toggleTheme } = useTheme();
   const { toast } = useToast();
 
-const handleSubmit = async (e: React.FormEvent) => {
-  console.log("HANDLE SUBMIT WORKING");
-  e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
     if (!isLogin && password !== confirmPassword) {
       toast({
@@ -41,6 +40,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
     try {
       if (isLogin) {
+        // --- LOGIN FLOW ---
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -48,7 +48,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
         if (error) throw error;
 
-        // 🔥 check approval status
+        // check approval status
         const { data: profile } = await supabase
           .from('profiles')
           .select('*')
@@ -74,34 +74,45 @@ const handleSubmit = async (e: React.FormEvent) => {
           return;
         }
 
-await signIn(email, password);      
+        // Session already established by signInWithPassword above;
+        // AuthProvider's onAuthStateChange listener will pick it up.
+      } else {
+        // --- SIGNUP FLOW ---
         if (role === 'supervisor' || role === 'admin') {
-  const { data, error } = await supabase
-    .from('role_codes')
-    .select('*')
-    .eq('code', inviteCode)
-    .single();
+          const { data, error } = await supabase
+            .from('role_codes')
+            .select('*')
+            .eq('code', inviteCode)
+            .single();
 
-  if (error || !data) {
-    toast({
-      title: 'Invalid Code',
-      description: 'Activation code is incorrect',
-      variant: 'destructive',
-    });
+          if (error || !data) {
+            toast({
+              title: 'Invalid Code',
+              description: 'Activation code is incorrect',
+              variant: 'destructive',
+            });
+            return;
+          }
+        }
 
-    setLoading(false);
-    return;
-  }
-}
+        await signUp(email, password, username, role);
 
-await signUp(email, password, username, role);
+        toast({
+          title: 'Check your email',
+          description: 'Please verify your email to complete signup',
+        });
       }
-} catch (error) {
-  console.error("FULL ERROR:", error);
-  alert(JSON.stringify(error));
-} finally {
-  setLoading(false);
-}
+    } catch (error) {
+      console.error('Auth error:', error);
+      const message = error instanceof Error ? error.message : 'Something went wrong';
+      toast({
+        title: 'Error',
+        description: message,
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -130,20 +141,19 @@ await signUp(email, password, username, role);
         </CardHeader>
 
         <CardContent>
-
-          {/* Username */}
-          {!isLogin && (
-            <div className="space-y-2 mb-4">
-              <label className="text-sm">Username</label>
-              <Input
-                value={username}
-                onChange={e => setUsername(e.target.value)}
-                required
-              />
-            </div>
-          )}
-
           <form onSubmit={handleSubmit} className="space-y-4">
+
+            {/* Username */}
+            {!isLogin && (
+              <div className="space-y-2">
+                <label className="text-sm">Username</label>
+                <Input
+                  value={username}
+                  onChange={e => setUsername(e.target.value)}
+                  required
+                />
+              </div>
+            )}
 
             {/* Email */}
             <div className="space-y-2">
@@ -180,49 +190,48 @@ await signUp(email, password, username, role);
               </div>
             )}
 
-{/* Role */}
-{!isLogin && (
-  <>
-    <div className="space-y-2">
-      <label>Role</label>
+            {/* Role */}
+            {!isLogin && (
+              <>
+                <div className="space-y-2">
+                  <label>Role</label>
 
-      <select
-        value={role}
-        onChange={(e) =>
-          setRole(e.target.value as 'student' | 'supervisor' | 'admin')
-        }
-        className="w-full h-11 rounded-lg border border-input bg-background px-3"
-      >
-        <option value="student">🎓 Student</option>
-        <option value="supervisor">👨‍🏫 Supervisor</option>
-        <option value="admin">⚙️ Admin</option>
-      </select>
-    </div>
+                  <select
+                    value={role}
+                    onChange={(e) =>
+                      setRole(e.target.value as 'student' | 'supervisor' | 'admin')
+                    }
+                    className="w-full h-11 rounded-lg border border-input bg-background px-3"
+                  >
+                    <option value="student">🎓 Student</option>
+                    <option value="supervisor">👨‍🏫 Supervisor</option>
+                    <option value="admin">⚙️ Admin</option>
+                  </select>
+                </div>
 
-    {(role === 'supervisor' || role === 'admin') && (
-      <div className="space-y-2">
-        <label>Activation Code</label>
+                {(role === 'supervisor' || role === 'admin') && (
+                  <div className="space-y-2">
+                    <label>Activation Code</label>
 
-        <Input
-          type="text"
-          value={inviteCode}
-          onChange={(e) => setInviteCode(e.target.value)}
-          placeholder="Enter activation code"
-          required
-        />
-      </div>
-    )}
-  </>
-)}
+                    <Input
+                      type="text"
+                      value={inviteCode}
+                      onChange={(e) => setInviteCode(e.target.value)}
+                      placeholder="Enter activation code"
+                      required
+                    />
+                  </div>
+                )}
+              </>
+            )}
 
-<Button
-  type="button"
-  className="w-full"
-  disabled={loading}
-  onClick={() => console.log("BUTTON CLICKED")}
->
-  {loading ? 'Loading...' : isLogin ? 'Login' : 'Sign Up'}
-</Button>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loading}
+            >
+              {loading ? 'Loading...' : isLogin ? 'Login' : 'Sign Up'}
+            </Button>
 
           </form>
 
