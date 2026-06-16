@@ -41,41 +41,15 @@ export default function AuthPage() {
     try {
       if (isLogin) {
         // --- LOGIN FLOW ---
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
         if (error) throw error;
 
-        // check approval status
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', data.user.id)
-          .single();
-
-        if (profile?.status === 'pending') {
-          await supabase.auth.signOut();
-          toast({
-            title: '⏳ Pending Approval',
-            description: 'Your account is waiting for admin approval',
-          });
-          return;
-        }
-
-        if (profile?.status === 'rejected') {
-          await supabase.auth.signOut();
-          toast({
-            title: '❌ Rejected',
-            description: 'Your account has been rejected',
-            variant: 'destructive',
-          });
-          return;
-        }
-
-        // Session already established by signInWithPassword above;
-        // AuthProvider's onAuthStateChange listener will pick it up.
+        // Session established; AuthProvider's onAuthStateChange listener
+        // will pick it up automatically. No approval gate.
       } else {
         // --- SIGNUP FLOW ---
         if (role === 'supervisor' || role === 'admin') {
