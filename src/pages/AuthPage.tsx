@@ -215,10 +215,14 @@ await signUp(email, password, username, role);
   </>
 )}
 
-            {/* Submit */}
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Loading...' : isLogin ? 'Login' : 'Sign Up'}
-            </Button>
+<Button
+  type="button"
+  className="w-full"
+  disabled={loading}
+  onClick={() => console.log("BUTTON CLICKED")}
+>
+  {loading ? 'Loading...' : isLogin ? 'Login' : 'Sign Up'}
+</Button>
 
           </form>
 
