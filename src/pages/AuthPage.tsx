@@ -73,14 +73,12 @@ export default function AuthPage() {
           return;
         }
 
-        signIn(email, password);
-      } else {
+await signIn(email, password);      
         if (role === 'supervisor' || role === 'admin') {
   const { data, error } = await supabase
     .from('role_codes')
     .select('*')
-    .eq('code', inviteCode``)
-    .eq('role', role)
+    .eq('code', inviteCode)
     .single();
 
   if (error || !data) {
@@ -97,15 +95,12 @@ export default function AuthPage() {
 
 await signUp(email, password, username, role);
       }
-    } catch (err: any) {
-      toast({
-        title: 'Error',
-        description: err.message,
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
+} catch (error) {
+  console.error("FULL ERROR:", error);
+  alert(JSON.stringify(error));
+} finally {
+  setLoading(false);
+}
   };
 
   return (
